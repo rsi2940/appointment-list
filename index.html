@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment List</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 300px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .card h3 {
+            background-color: #b7f190;
+            padding: 10px;
+            margin: -15px -15px 10px -15px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .title {
+            text-transform: capitalize;
+        }
+        @media screen and (max-width: 600px) {
+            .card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Appointment List</h1>
+    <div class="dropdown-container">
+        <label for="name-select">View appointments for: </label>
+        <select id="name-select" onchange="fetchCsvFile()">
+            <option value="mataji">Mataji</option>
+            <option value="pitaji">Pitaji</option>
+        </select>
+    </div>
+    <div id="card-container" class="card-container"></div>
+
+    <script>
+        function fetchCsvFile() {
+            const selectedName = document.getElementById('name-select').value;
+            const filePath = `appointments/${selectedName}.csv`;
+            
+            fetch(filePath)
+                .then(response => response.text())
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function (results) {
+                            // Remove first two columns
+                            const filteredData = results.data.map(row => {
+                                const keys = Object.keys(row).slice(2);
+                                let newRow = {};
+                                keys.forEach(key => newRow[key] = row[key]);
+                                return newRow;
+                            });
+                            displayCards(filteredData);
+                        }
+                    });
+                })
+                .catch(error => alert('Error loading file: ' + error));
+        }
+
+        function displayCards(data) {
+            if (data.length === 0) return;
+            
+            let container = document.getElementById('card-container');
+            container.innerHTML = '';
+            
+            data.forEach(row => {
+                let card = document.createElement('div');
+                card.className = 'card';
+                
+                let cardContent = `<h3>${Object.values(row)[0]}</h3>`;
+                Object.entries(row).slice(1).forEach(([key, value]) => {
+                    cardContent += `<p><strong class="title">${key}:</strong> ${value}</p>`;
+                });
+                
+                card.innerHTML = cardContent;
+                container.appendChild(card);
+            });
+        }
+
+        window.onload = fetchCsvFile;
+    </script>
+</body>
+</html>
